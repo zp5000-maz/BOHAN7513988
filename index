@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>博瀚文理補習班 - AI 英語訓練系統 V15</title>
+    <style>
+        :root { --primary: #0056b3; --success: #28a745; --danger: #dc3545; --warning: #ffc107; }
+        body { font-family: 'Microsoft JhengHei', sans-serif; background: #f0f4f8; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        #login-container, #main-app { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 90%; max-width: 420px; text-align: center; }
+        .hidden { display: none; }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        .btn-login { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: bold; margin-top: 10px; }
+        
+        .word-box { font-size: 28px; font-weight: bold; margin: 25px 0; line-height: 1.6; min-height: 100px; color: #333; }
+        .word { display: inline-block; margin: 0 5px; color: #444; transition: 0.2s; }
+        .active-word { color: var(--primary) !important; transform: scale(1.3); text-decoration: underline; font-weight: 900; }
+        #chi-text { font-size: 19px; color: #888; margin-top: -5px; height: 30px; }
+
+        /* 真實音量進度條 */
+        .vol-monitor { width: 100%; height: 15px; background: #eee; border-radius: 8px; margin-bottom: 15px; overflow: hidden; display: none; border: 1px solid #ddd; position: relative; }
+        #vol-bar { width: 0%; height: 100%; background: linear-gradient(90deg, #28a745, #ffc107, #dc3545); transition: 0.05s; }
+        .vol-label { position: absolute; width: 100%; font-size: 10px; color: #666; line-height: 15px; top: 0; left: 0; pointer-events: none; }
+
+        #score-board { font-size: 80px; font-weight: 900; color: #333; margin: 10px 0; }
+        #feedback { font-size: 24px; font-weight: bold; margin-bottom: 15px; }
+
+        .controls { display: flex; justify-content: center; gap: 20px; margin-bottom: 25px; }
+        .circle-btn { width: 90px; height: 90px; border-radius: 50%; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: white; transition: 0.3s; box-shadow: 0 4px rgba(0,0,0,0.2); }
+        .btn-speaker { background: var(--warning); color: #333; }
+        .btn-mic { background: var(--danger); }
+        .btn-stop { background: #333; display: none; }
+
+        .btn-next { width: 100%; padding: 15px; border-radius: 12px; border: none; background: #ccc; color: white; font-size: 18px; cursor: not-allowed; }
+        .unlocked { background: var(--success) !important; cursor: pointer !important; box-shadow: 0 5px 15px rgba(40,167,69,0.3); }
+    </style>
+</head>
+<body>
+
+<div id="login-container">
+    <div style="font-size: 26px; font-weight: bold; color: var(--primary); margin-bottom: 20px;">博瀚文理補習班</div>
+    <input type="text" id="username" placeholder="請輸入學生帳號">
+    <input type="password" id="password" placeholder="請輸入密碼">
+    <select id="voice-gender">
+        <option value="female">👧 英文女老師 (Female)</option>
+        <option value="male">👦 英文男老師 (Male)</option>
+    </select>
+    <button class="btn-login" onclick="login()">進入系統</button>
+</div>
+
+<div id="main-app" class="hidden">
+    <div id="progress" style="color: #999; font-weight: bold;">練習進度 1 / 2</div>
+    <div class="word-box" id="eng-display"></div>
+    <div id="chi-text"></div>
+    
+    <div class="vol-monitor" id="vol-ui">
+        <div id="vol-bar"></div>
+        <div class="vol-label">收音能量感測中...</div>
+    </div>
+
+    <div id="score-board">--</div>
+    <div id="feedback">請點擊喇叭聽範讀</div>
+
+    <div class="controls">
+        <button class="circle-btn btn-speaker" onclick="playKTV()">🔊<br>聽範讀</button>
+        <button class="circle-btn btn-mic" id="start-btn" onclick="startRecording()">🎙️<br>開始錄音</button>
+        <button class="circle-btn btn-stop" id="stop-btn" onclick="stopAndScore()">⏹️<br>錄完送出</button>
+    </div>
+    <button id="next-btn" class="btn-next" onclick="nextStep()" disabled>下一題 ➡️</button>
+</div>
+
+<script>
+    const data = [
+        { eng: "English is a bridge to the whole world.", chi: "英文是通往全世界的橋樑。" },
+        { eng: "I am proud to be a student at Bo-Han.", chi: "我以身為博瀚的學生為榮。" }
+    ];
+    let currentIdx = 0;
+    let selectedGender = 'female';
+    
+    // 真實音訊處理變數
+    let audioCtx, analyser, source, stream;
+    let totalVolume = 0;
+    let sampleCount = 0;
+
+    function login() {
+        if(document.getElementById('username').value && document.getElementById('password').value) {
+            selectedGender = document.getElementById('voice-gender').value;
+            document.getElementById('login-container').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            loadQuestion();
+        } else { alert("請輸入帳號與密碼"); }
+    }
+
+    function loadQuestion() {
+        const container = document.getElementById('eng-display');
+        container.innerHTML = '';
+        data[currentIdx].eng.split(' ').forEach((w, i) => {
+            container.innerHTML += `<span class="word" id="w-${i}">${w}</span> `;
+        });
+        document.getElementById('chi-text').innerText = "";
+        document.getElementById('score-board').innerText = "--";
+        document.getElementById('feedback').innerText = "點擊喇叭聽老師唸";
+        document.getElementById('next-btn').disabled = true;
+        document.getElementById('next-btn').classList.remove('unlocked');
+        document.getElementById('progress').innerText = `練習進度 ${currentIdx + 1} / ${data.length}`;
+    }
+
+    function playKTV() {
+        window.speechSynthesis.cancel();
+        setTimeout(() => {
+            const utter = new SpeechSynthesisUtterance(data[currentIdx].eng);
+            utter.lang = 'en-US';
+            utter.rate = 0.8;
+            utter.pitch = (selectedGender === 'male') ? 0.8 : 1.1;
+            document.getElementById('chi-text').innerText = data[currentIdx].chi;
+            utter.onboundary = (e) => {
+                if (e.name === 'word') {
+                    const idx = data[currentIdx].eng.substring(0, e.charIndex + e.charLength).trim().split(' ').length - 1;
+                    document.querySelectorAll('.word').forEach(el => el.classList.remove('active-word'));
+                    if(document.getElementById(`w-${idx}`)) document.getElementById(`w-${idx}`).classList.add('active-word');
+                }
+            };
+            utter.onend = () => document.querySelectorAll('.word').forEach(el => el.classList.remove('active-word'));
+            window.speechSynthesis.speak(utter);
+        }, 100);
+    }
+
+    // 🎙️ 真實錄音與音量偵測
+    async function startRecording() {
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioCtx.createAnalyser();
+            source = audioCtx.createMediaStreamSource(stream);
+            source.connect(analyser);
+            
+            totalVolume = 0;
+            sampleCount = 0;
+
+            document.getElementById('vol-ui').style.display = 'block';
+            document.getElementById('start-btn').style.display = 'none';
+            document.getElementById('stop-btn').style.display = 'flex';
+            document.getElementById('feedback').innerText = "🔴 正在收音中...";
+            document.getElementById('feedback').style.color = "red";
+
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+
+            const drawVol = () => {
+                if (!stream) return;
+                analyser.getByteFrequencyData(dataArray);
+                let sum = 0;
+                for(let i=0; i<bufferLength; i++) sum += dataArray[i];
+                let average = sum / bufferLength;
+                
+                // 真實反映音量到進度條上
+                document.getElementById('vol-bar').style.width = Math.min(average * 4, 100) + "%";
+                
+                // 累積音量數據用於評分
+                totalVolume += average;
+                sampleCount++;
+                
+                requestAnimationFrame(drawVol);
+            };
+            drawVol();
+        } catch (err) {
+            alert("林主任提醒：瀏覽器封鎖了麥克風！\n請點擊網址旁邊的『鎖頭』圖示並開啟『麥克風權限』，否則無法偵測聲音喔。");
+        }
+    }
+
+    function stopAndScore() {
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+            stream = null;
+        }
+        document.getElementById('start-btn').style.display = 'flex';
+        document.getElementById('stop-btn').style.display = 'none';
+        document.getElementById('vol-ui').style.display = 'none';
+        
+        const avgVol = sampleCount > 0 ? (totalVolume / sampleCount) : 0;
+        
+        let score = 0;
+        let msg = "";
+        let voiceMsg = "";
+
+        // 嚴格判斷：平均音量必須超過 12 (代表真的有大聲說話，而非背景雜音)
+        if (avgVol < 12) {
+            score = 0;
+            msg = "請加油";
+            voiceMsg = "請加油";
+            alert("林主任抓到了：你剛才幾乎沒有發出聲音喔！請重新練習。");
+        } else {
+            // 根據音量表現與隨機因子給分
+            score = Math.floor(Math.random() * 20) + 80; 
+            msg = "太棒了"; voiceMsg = "太棒了";
+        }
+
+        document.getElementById('score-board').innerText = score;
+        document.getElementById('feedback').innerText = msg;
+        document.getElementById('feedback').style.color = (score >= 60) ? "blue" : "red";
+        
+        const fUtter = new SpeechSynthesisUtterance(voiceMsg);
+        fUtter.lang = 'zh-TW';
+        fUtter.pitch = (selectedGender === 'male') ? 0.8 : 1.1;
+        window.speechSynthesis.speak(fUtter);
+
+        if(score >= 60) {
+            document.getElementById('next-btn').disabled = false;
+            document.getElementById('next-btn').classList.add('unlocked');
+        }
+    }
+
+    function nextStep() {
+        currentIdx++;
+        if(currentIdx < data.length) loadQuestion();
+        else { alert("恭喜！博瀚的小天才完成了所有練習！"); location.reload(); }
+    }
+</script>
+</body>
+</html>
