@@ -1,0 +1,17 @@
+{
+  "name": "博瀚 AI 英語",
+  "short_name": "博瀚AI",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#00d4ff",
+  "description": "林博瀚主任口說評分系統",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/5968/5968261.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
