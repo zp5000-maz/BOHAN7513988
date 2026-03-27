@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>博瀚 AI 英語 V55.9.8 修正版</title>
+    <title>博瀚 AI 英語 V55.9.8 雙系統相容版</title>
     <style>
         :root { --primary: #00d4ff; --gold: #ffc107; --bg: #050505; --card: #111; --success: #00ffbb; --warning: #ffc107; --danger: #ff4444; }
         body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: #fff; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; -webkit-tap-highlight-color: transparent; }
@@ -13,75 +13,61 @@
         .logo-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary); position: relative; z-index: 5; background: #000; }
         .logo-glow { position: absolute; top: -5px; left: -5px; right: -5px; bottom: -5px; border-radius: 50%; border: 2px solid var(--primary); box-shadow: 0 0 15px var(--primary); animation: breathe 2.5s infinite; }
         @keyframes breathe { 0%, 100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 1; transform: scale(1.05); } }
-        @keyframes pop { 0% { transform: scale(0); } 100% { transform: scale(1); } }
-
-        .browser-tip { color: var(--gold); font-size: 13px; margin-top: 15px; background: rgba(255, 193, 7, 0.1); padding: 8px 15px; border-radius: 10px; border: 1px dashed var(--gold); display: inline-block; }
-        #login-ui { display: flex; flex-direction: column; align-items: center; width: 100%; }
-        #loading-zone { width: 100%; display: none; margin-top: 20px; }
-        .progress-track { width: 100%; height: 8px; background: #1a1a1a; border-radius: 10px; overflow: hidden; }
-        .progress-bar { width: 0%; height: 100%; background: linear-gradient(90deg, #00d4ff, #0080ff); }
         
         #toast { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.5); width: 85%; z-index: 1000; opacity: 0; pointer-events: none; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); background: rgba(0,0,0,0.98); padding: 40px 20px; border-radius: 40px; border: 3px solid var(--primary); display: flex; flex-direction: column; align-items: center; box-sizing: border-box; }
         #toast.toast-show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
         #toast-icon { font-size: 80px; margin-bottom: 10px; }
-        #toast-text { font-size: 24px; font-weight: 900; }
         
-        #fw-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; pointer-events: none; display: none; }
         .content-scroll { flex: 1; overflow-y: auto; margin-bottom: 10px; padding-top: 60px; scroll-behavior: smooth; }
-        
         .hidden { display: none !important; }
         #ktv-box { font-size: 30px; font-weight: 800; line-height: 1.4; margin: 10px 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 12px; }
-        .word { color: var(--gold); transition: color 0.2s; } 
-        .word.active { color: var(--primary); text-shadow: 0 0 15px var(--primary); transform: scale(1.1); } 
+        .word { color: var(--gold); transition: color 0.1s; display: inline-block; } 
+        .word.active { color: #fff; text-shadow: 0 0 15px var(--primary), 0 0 30px var(--primary); transform: scale(1.15); } 
         #chi-box { color: #fff; font-size: 18px; margin: 20px 0; opacity: 0.7; }
         
         #total-score { font-size: 85px; font-weight: 900; color: var(--success); margin: 0; line-height: 1; }
         .score-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px; background: #000; padding: 10px; border-radius: 20px; }
-        .score-item b { font-size: 36px; display: block; color: #fff; }
-        .score-item span { font-size: 14px; display: block; color: #aaa; }
-        
         .btn { width: 100%; padding: 16px; border-radius: 18px; border: none; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-primary { background: linear-gradient(135deg, #00d4ff, #0080ff); color: #000; box-shadow: 0 5px 15px rgba(0, 212, 255, 0.4); }
-        .btn-primary:disabled { background: #444; color: #888; box-shadow: none; cursor: not-allowed; }
+        .btn-primary { background: linear-gradient(135deg, #00d4ff, #0080ff); color: #000; }
         .btn-dark { background: #222; color: #fff; border: 1px solid #444; }
-        .login-input { width: 100%; padding: 18px; margin-bottom: 15px; border-radius: 15px; border: 1px solid #333; background: #000; color: #fff; text-align: center; font-size: 20px; box-sizing: border-box; outline: none; }
+        .login-input { width: 100%; padding: 18px; margin-bottom: 15px; border-radius: 15px; border: 1px solid #333; background: #000; color: #fff; text-align: center; font-size: 20px; box-sizing: border-box; }
     </style>
 </head>
 <body onclick="wakeAudioContext()">
 
-<canvas id="fw-canvas"></canvas>
-<div id="toast"><div id="toast-icon"></div><div id="toast-text"></div></div>
+<canvas id="fw-canvas" style="position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999; pointer-events:none; display:none;"></canvas>
+<div id="toast"><div id="toast-icon"></div><div id="toast-text" style="font-size:24px; font-weight:900;"></div></div>
 
 <div class="card">
     <div id="login-ui">
         <div class="logo-area">
             <div class="logo-glow"></div>
-            <img src="bohan_logo.png" class="logo-img" alt="博瀚Logo" onerror="this.style.display='none'">
+            <img src="bohan_logo.png" class="logo-img" alt="Logo" onerror="this.style.display='none'">
         </div>
-        <h2 style="color:var(--primary); margin-top: 15px; letter-spacing: 2px;">博瀚 AI口說 V55.9.8 修正版</h2>
-        <p style="color:rgba(255,255,255,0.4); margin-top: -10px; font-size: 12px;">V55.9.8 正式回傳版</p>
+        <h2 style="color:var(--primary); margin-top: 15px;">博瀚 AI 英語系統</h2>
         <input type="text" id="user" class="login-input" placeholder="學生姓名">
         <input type="password" id="pass" class="login-input" placeholder="密碼">
-        <div id="loading-zone">
-            <div class="progress-track"><div class="progress-bar" id="p-bar"></div></div>
+        <div id="loading-zone" style="display:none; width:100%; margin-top:20px;">
+            <div style="height:8px; background:#1a1a1a; border-radius:10px; overflow:hidden;">
+                <div id="p-bar" style="width:0%; height:100%; background:linear-gradient(90deg,#00d4ff,#0080ff);"></div>
+            </div>
         </div>
-        <button id="login-btn" class="btn btn-primary" onclick="handleStartLoading()" style="margin-top: 10px;">進入學習空間</button>
-        <div class="browser-tip">💡請用瀏覽器(safari或是chrome)開啟連結</div>
+        <button id="login-btn" class="btn btn-primary" onclick="handleStartLoading()" style="margin-top:10px;">進入學習空間</button>
     </div>
 
     <div id="main-ui" class="hidden" style="display:flex; flex-direction:column; height:100%;">
         <div class="content-scroll" id="scroller">
-            <div id="ktv-box">準備中...</div>
+            <div id="ktv-box">載入中...</div>
             <div id="chi-box"></div>
         </div>
         <div class="controls">
             <div id="total-score">0</div>
             <div class="score-grid">
-                <div class="score-item"><b id="s-f">0</b><span>流暢</span></div>
-                <div class="score-item"><b id="s-c">0</b><span>完整</span></div>
-                <div class="score-item"><b id="s-q">0</b><span>清晰</span></div>
+                <div style="color:#aaa;">流暢 <b id="s-f" style="color:#fff; font-size:24px;">0</b></div>
+                <div style="color:#aaa;">完整 <b id="s-c" style="color:#fff; font-size:24px;">0</b></div>
+                <div style="color:#aaa;">清晰 <b id="s-q" style="color:#fff; font-size:24px;">0</b></div>
             </div>
-            <canvas id="wave" style="width:100%; height:50px; background:#000; border-radius:10px; margin-bottom:10px; border:1px solid #333;"></canvas>
+            <canvas id="wave" style="width:100%; height:45px; background:#000; border-radius:10px; margin-bottom:10px; border:1px solid #333;"></canvas>
             <div style="display:flex; gap:10px; margin-bottom:10px;">
                 <button id="play-btn" class="btn btn-dark" style="flex:1" onclick="handlePlay()">🔊 聽範例</button>
                 <button id="rec-btn" class="btn btn-dark" style="flex:2; color:var(--success);" onclick="toggleRec()">🎙️ 按我錄音</button>
@@ -96,28 +82,28 @@
     let db = { users:[], questions:[] }, stu = "", cur = 0, isRec = false, latestResult = "", audioBlob = null;
     let audioCtx, ana, rec, stream, isPlaying = false;
     
-    const vGood = new Audio('good.mp3'), vTry = new Audio('try.mp3'), vStudy = new Audio('study.mp3'), vNoSound = new Audio('nosound.mp3'), cheerAudio = new Audio('https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3');
+    const vGood = new Audio('good.mp3'), vTry = new Audio('try.mp3'), vStudy = new Audio('study.mp3'), vNoSound = new Audio('nosound.mp3');
 
+    // --- 關鍵修正：Android 語音解鎖 ---
     async function wakeAudioContext() {
         if (!audioCtx || audioCtx.state === 'closed') audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         if (audioCtx.state === 'suspended') await audioCtx.resume();
+        
+        // Android 必須在點擊時觸發一次語音噴發，之後的 playFull 才會生效
+        const unlock = new SpeechSynthesisUtterance("");
+        unlock.volume = 0;
+        window.speechSynthesis.speak(unlock);
     }
 
-    async function init() {
-        try { const r = await fetch(`${API}?t=${Date.now()}`); const d = await r.json(); if(d.users) db = d; } catch(e) {}
-    }
+    async function init() { try { const r = await fetch(`${API}?t=${Date.now()}`); const d = await r.json(); if(d.users) db = d; } catch(e) {} }
     window.onload = init;
 
     function handleStartLoading() {
-        const u = document.getElementById('user').value.trim();
-        const p = document.getElementById('pass').value.trim();
+        const u = document.getElementById('user').value.trim(), p = document.getElementById('pass').value.trim();
         const found = db.users.find(x => String(x[0]) === u && String(x[1]) === p);
-        if(!found) { alert("驗證失敗"); return; }
-        stu = u;
-        document.getElementById('login-btn').style.display = 'none';
-        document.getElementById('loading-zone').style.display = 'block';
-        let prg = 0;
-        const timer = setInterval(() => {
+        if(!found) { alert("帳號密碼錯誤"); return; }
+        stu = u; document.getElementById('login-btn').style.display = 'none'; document.getElementById('loading-zone').style.display = 'block';
+        let prg = 0; const timer = setInterval(() => {
             prg += 10; document.getElementById('p-bar').style.width = prg + '%';
             if(prg >= 100) { clearInterval(timer); setTimeout(() => { document.getElementById('login-ui').classList.add('hidden'); document.getElementById('main-ui').classList.remove('hidden'); renderQ(); }, 300); }
         }, 50);
@@ -128,20 +114,18 @@
         document.getElementById('ktv-box').innerHTML = q.eng.split(" ").map((w, i) => `<span class="word" id="w-${i}">${w}</span>`).join(" ");
         document.getElementById('chi-box').innerText = q.chi;
         document.getElementById('total-score').innerText = "0";
-        document.getElementById('total-score').style.color = "var(--success)";
-        document.getElementById('s-f').innerText = "0"; document.getElementById('s-c').innerText = "0"; document.getElementById('s-q').innerText = "0";
-        document.getElementById('next-btn').disabled = true;
-        latestResult = ""; audioBlob = null;
-        document.getElementById('scroller').scrollTop = 0;
+        document.getElementById('next-btn').disabled = true; latestResult = ""; audioBlob = null;
         resetPlayState();
     }
 
     function resetPlayState() { window.speechSynthesis.cancel(); isPlaying = false; document.getElementById('play-btn').innerText = "🔊 聽範例"; document.querySelectorAll('.word').forEach(w => w.classList.remove('active')); }
     
+    // --- 關鍵修正：Android/iOS 整合播放 ---
     function playFull() {
         resetPlayState(); isPlaying = true; document.getElementById('play-btn').innerText = "⏹ 停止";
         const ut = new SpeechSynthesisUtterance(db.questions[cur].eng);
-        ut.lang = 'en-US'; ut.rate = 0.7; let idx = 0;
+        ut.lang = 'en-US'; ut.rate = 0.7; ut.volume = 1;
+        let idx = 0;
         ut.onboundary = (e) => { 
             if(e.name === 'word' && isPlaying) { 
                 const ws = document.querySelectorAll('.word');
@@ -150,10 +134,13 @@
             } 
         };
         ut.onend = () => { if(isPlaying) { 
-            const ch = new SpeechSynthesisUtterance(db.questions[cur].chi); ch.lang = 'zh-TW'; ch.rate = 0.8;
-            ch.onstart = () => { document.getElementById('chi-box').scrollIntoView({ behavior: 'smooth', block: 'center' }); };
-            ch.onend = () => resetPlayState();
-            window.speechSynthesis.speak(ch); 
+            // 延遲 100ms 確保語音通道釋放，這對 Android 很重要
+            setTimeout(() => {
+                const ch = new SpeechSynthesisUtterance(db.questions[cur].chi); ch.lang = 'zh-TW'; ch.rate = 0.8; ch.volume = 1;
+                ch.onstart = () => { document.getElementById('chi-box').scrollIntoView({ behavior: 'smooth', block: 'center' }); };
+                ch.onend = () => resetPlayState();
+                window.speechSynthesis.speak(ch); 
+            }, 100);
         }};
         window.speechSynthesis.speak(ut);
     }
@@ -205,62 +192,42 @@
         let total = rate >= 0.9 ? Math.floor(rate * 3 + 27) : (rate >= 0.5 ? Math.floor(rate * 14 + 13) : Math.max(5, Math.floor(rate * 20)));
         document.getElementById('s-f').innerText = Math.floor(total/3); document.getElementById('s-c').innerText = Math.floor(total/3); document.getElementById('s-q').innerText = total - Math.floor(total/3)*2;
         document.getElementById('total-score').innerText = total; document.getElementById('total-score').style.color = rate>=0.9?"var(--success)":(rate>=0.5?"var(--warning)":"var(--danger)");
-        showToast(rate>=0.9?"👑":(rate>=0.5?"👍":"😤"), rate>=0.9?"太厲害了，好棒棒":(rate>=0.5?"還不錯喔，再加油":"請認真學習！"), rate>=0.9?"var(--success)":"var(--warning)", rate>=0.9?1:(rate>=0.5?2:3));
+        showToast(rate>=0.9?"👑":(rate>=0.5?"👍":"😤"), rate>=0.9?"太棒了！":"還不錯喔！", rate>=0.9?"var(--success)":"var(--warning)", rate>=0.9?1:(rate>=0.5?2:3));
         document.getElementById('next-btn').disabled = false;
     }
 
     function showToast(icon, text, borderColor, type) {
         const t = document.getElementById('toast'); document.getElementById('toast-icon').innerText = icon; document.getElementById('toast-text').innerText = text;
         t.style.borderColor = borderColor; t.classList.add('toast-show');
-        if (type === 1) vGood.play().catch(()=>{}); else if (type === 2) vTry.play().catch(()=>{}); else if (type === 3) vStudy.play().catch(()=>{}); else vNoSound.play().catch(()=>{});
+        // Android 音效強化播放
+        setTimeout(() => {
+            if (type === 1) vGood.play().catch(()=>{}); else if (type === 2) vTry.play().catch(()=>{}); else if (type === 3) vStudy.play().catch(()=>{}); else vNoSound.play().catch(()=>{});
+        }, 50);
         setTimeout(() => t.classList.remove('toast-show'), 2500);
     }
 
-    // --- 核心上傳邏輯修正 ---
     async function fastNext() {
-        const btn = document.getElementById('next-btn');
-        btn.disabled = true; // 防止重複點擊
+        const btn = document.getElementById('next-btn'); btn.disabled = true;
         const score = document.getElementById('total-score').innerText;
-        
-        // 1. 如果是最後一題，先強行觸發結算語音（這一步是用戶觸發的，所以會成功）
         if (cur === db.questions.length - 1) {
             window.speechSynthesis.cancel();
             const ut = new SpeechSynthesisUtterance("Congratulation, Mission completed!");
-            ut.lang = 'en-US'; ut.rate = 0.8;
-            window.speechSynthesis.speak(ut);
+            ut.lang = 'en-US'; window.speechSynthesis.speak(ut);
         }
-
-        // 2. 將 Blob 轉為 Base64 字串
         let base64Audio = "";
         if (audioBlob) {
-            const reader = new FileReader();
-            reader.readAsDataURL(audioBlob);
-            await new Promise(resolve => {
-                reader.onloadend = () => {
-                    base64Audio = reader.result.split(',')[1];
-                    resolve();
-                };
-            });
+            const reader = new FileReader(); reader.readAsDataURL(audioBlob);
+            await new Promise(res => { reader.onloadend = () => { base64Audio = reader.result.split(',')[1]; res(); }; });
         }
-
-        // 3. 送出資料
         try {
-            fetch(API, { 
-                method: 'POST', 
-                mode: 'no-cors', 
-                body: JSON.stringify({ student: stu, eng: db.questions[cur].eng, score: score, audio: base64Audio }) 
-            });
-        } catch(e) { console.log("Upload Error"); }
-
-        // 4. 切換題目或進煙火
-        if (cur === db.questions.length - 1) runFinal(); 
-        else { cur++; renderQ(); }
+            await fetch(API, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ student: stu, eng: db.questions[cur].eng, score: score, audio: base64Audio }) });
+        } catch(e) {}
+        if (cur === db.questions.length - 1) runFinal(); else { cur++; renderQ(); }
     }
 
     function runFinal() {
         const cvs = document.getElementById('fw-canvas'); cvs.style.display = 'block'; const ctx = cvs.getContext('2d'); 
         cvs.width = window.innerWidth; cvs.height = window.innerHeight;
-        cheerAudio.play().catch(()=>{});
         const pts = []; for(let i=0; i<150; i++) pts.push({ x: cvs.width/2, y: cvs.height/2, vx: (Math.random()-0.5)*22, vy: (Math.random()-0.5)*22, c: `hsl(${Math.random()*360},100%,60%)`, a: 1 });
         function anim() {
             ctx.fillStyle = 'rgba(0,0,0,0.1)'; ctx.fillRect(0,0,cvs.width,cvs.height);
@@ -270,14 +237,12 @@
     }
 
     function showFinal() {
-        document.getElementById('main-ui').innerHTML = `
-            <div style="margin-top:100px; padding: 20px; animation: pop 0.6s ease-out;">
-                <div style="font-size: 80px; margin-bottom: 20px;">🏆</div>
-                <h1 style="color:var(--primary); line-height: 1.2;">Congratulation,<br>Mission completed!</h1>
-                <h2 style="color:#fff; opacity:0.8;">功課完成，上傳成功！</h2>
-                <button class="btn btn-primary" onclick="location.reload()" style="margin-top: 40px; width: 220px;">回主畫面</button>
-            </div>
-        `;
+        document.getElementById('main-ui').innerHTML = `<div style="margin-top:100px; padding: 20px;">
+            <div style="font-size: 80px; margin-bottom: 20px;">🏆</div>
+            <h1 style="color:var(--primary);">Mission completed!</h1>
+            <h2 style="color:#fff; opacity:0.8;">功課完成，上傳成功！</h2>
+            <button class="btn btn-primary" onclick="location.reload()" style="margin-top: 40px; width: 220px;">回主畫面</button>
+        </div>`;
     }
 </script>
 </body>
