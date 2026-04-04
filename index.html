@@ -2,64 +2,97 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>博瀚 AI 英語 V56.5</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>博瀚 AI 英語</title>
     <style>
-        :root { --p: #00d4ff; --bg: #050505; --s: #00ffbb; --d: #ff4444; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); color: #fff; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        .card { background: #111; padding: 25px; border-radius: 25px; width: 90%; max-width: 380px; text-align: center; border: 1px solid #333; }
-        .btn { width: 100%; padding: 15px; border-radius: 12px; border: none; font-size: 18px; font-weight: bold; margin-top: 10px; cursor: pointer; }
-        .btn-p { background: var(--p); color: #000; }
+        :root { --primary: #00d4ff; --bg: #050505; --success: #00ffbb; --danger: #ff4444; --card-bg: #111; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: #fff; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .card { background: var(--card-bg); padding: 30px 25px; border-radius: 30px; width: 90%; max-width: 400px; text-align: center; border: 1px solid #333; box-shadow: 0 15px 35px rgba(0,0,0,0.7); }
+        .hidden { display: none !important; }
+        h2 { color: var(--primary); margin-top: 0; font-size: 28px; }
+        input { width: 100%; padding: 15px; margin-bottom: 12px; border-radius: 12px; border: 1px solid #333; background: #000; color: #fff; text-align: center; font-size: 16px; box-sizing: border-box; }
+        .btn { width: 100%; padding: 16px; border-radius: 15px; border: none; font-size: 18px; font-weight: bold; margin-top: 12px; cursor: pointer; transition: 0.2s; -webkit-tap-highlight-color: transparent; }
+        .btn-p { background: var(--primary); color: #000; }
         .btn-d { background: #222; color: #fff; border: 1px solid #444; }
-        input { width: 100%; padding: 15px; margin-bottom: 10px; border-radius: 10px; border: 1px solid #333; background: #000; color: #fff; text-align: center; box-sizing: border-box; }
-        #wave { width: 100%; height: 50px; background: #000; border-radius: 10px; margin: 10px 0; border: 1px solid #222; }
+        .btn:active { opacity: 0.7; transform: scale(0.98); }
+        .btn:disabled { background: #333; color: #666; cursor: not-allowed; border: none; }
+        #q-eng { font-size: 24px; color: #ffc107; font-weight: bold; margin-bottom: 8px; line-height: 1.3; }
+        #q-chi { opacity: 0.6; font-size: 16px; margin-bottom: 20px; }
+        #score-display { font-size: 80px; font-weight: 900; color: var(--success); margin: 10px 0; line-height: 1; }
+        #score-unit { font-size: 24px; vertical-align: middle; margin-left: 5px; }
+        #wave { width: 100%; height: 60px; background: #000; border-radius: 12px; margin: 15px 0; border: 1px solid #222; }
     </style>
 </head>
 <body>
+
 <div class="card">
     <div id="login-ui">
-        <h2 style="color:var(--p)">博瀚 AI 英語</h2>
-        <input type="text" id="user" placeholder="學生姓名">
-        <input type="password" id="pass" placeholder="密碼">
-        <button class="btn btn-p" onclick="doLogin()">登入</button>
+        <h2>博瀚 AI 英語</h2>
+        <input type="text" id="user" placeholder="學生姓名" autocomplete="off">
+        <input type="password" id="pass" placeholder="密碼" autocomplete="off">
+        <button class="btn btn-p" onclick="doLogin()">進入學習</button>
     </div>
-    <div id="main-ui" style="display:none">
-        <div id="q-eng" style="font-size: 22px; color: #ffc107; font-weight: bold; margin-bottom: 10px;"></div>
-        <div id="score" style="font-size: 60px; font-weight: 900; color: var(--s);">0 分</div>
+
+    <div id="main-ui" class="hidden">
+        <div id="q-eng"></div>
+        <div id="q-chi"></div>
+        <div id="score-display">0<span id="score-unit">分</span></div>
         <canvas id="wave"></canvas>
-        <button class="btn btn-d" onclick="sayIt()">🔊 聽範例</button>
-        <button id="rec-btn" class="btn btn-d" style="color:var(--s)" onclick="runRec()">🎙️ 開始錄音</button>
-        <button id="next-btn" class="btn btn-p" onclick="nextQ()" disabled>儲存並下一題</button>
+        <button id="play-btn" class="btn btn-d" onclick="sayIt()">🔊 聽範例聲音</button>
+        <button id="rec-btn" class="btn btn-d" style="color:var(--success)" onclick="runRec()">🎙️ 按我錄音</button>
+        <button id="next-btn" class="btn btn-p" style="background: #0084a5; color: white;" onclick="nextQ()" disabled>儲存並下一題 ➔</button>
     </div>
 </div>
 
 <script>
-    const API = "https://script.google.com/macros/s/AKfycbwTHJwaGhwzlZ9JOmPMYDFk3SXSXHBDUPp5OMCqwYRfPYwdcSsGaSirydk1JysezR7BPA/exec"; 
+    // ⚠️ 請務必替換為您的 GAS 部署網址
+    const API = "https://script.google.com/macros/s/AKfycbx-IZmwgKQ4LU3HEpVzy5TukbPIbKrHhGuTrTxgCLUSsLs8gyNZgHZ6CmBoJb2DEf749g/exec"; 
+    
     let db={users:[],questions:[]}, stu="", cur=0, isRec=false, mr, chunks=[], audioCtx, ana, aniId;
 
-    window.onload = async () => { try { const r = await fetch(API); db = await r.json(); } catch(e) { alert("連線失敗"); } };
+    // 初始化：載入名單與題目
+    window.onload = async () => { 
+        try { 
+            const r = await fetch(API); 
+            db = await r.json(); 
+        } catch(e) { console.error("連線後端失敗"); } 
+    };
 
+    // 登入邏輯
     function doLogin() {
-        const u = document.getElementById('user').value.trim(), p = document.getElementById('pass').value.trim();
+        const u = document.getElementById('user').value.trim();
+        const p = document.getElementById('pass').value.trim();
+        // 驗證姓名與密碼 (需對應試算表 A 欄與 B 欄)
         if (db.users.some(x => x[0] === u && x[1] === p)) {
-            stu = u; document.getElementById('login-ui').style.display='none';
-            document.getElementById('main-ui').style.display='block'; showQ();
-        } else alert("登入失敗");
+            stu = u; 
+            document.getElementById('login-ui').classList.add('hidden');
+            document.getElementById('main-ui').classList.remove('hidden'); 
+            showQ();
+        } else {
+            alert("姓名或密碼不正確，請重新輸入。");
+        }
     }
 
+    // 顯示題目
     function showQ() {
         const q = db.questions[cur];
         document.getElementById('q-eng').innerText = q.eng;
-        document.getElementById('score').innerText = "0 分";
+        document.getElementById('q-chi').innerText = q.chi;
+        document.getElementById('score-display').innerHTML = `0<span id="score-unit">分</span>`;
         document.getElementById('next-btn').disabled = true;
+        document.getElementById('next-btn').innerText = "儲存並下一題 ➔";
     }
 
+    // 語音播放範例
     function sayIt() {
         window.speechSynthesis.cancel();
         const u = new SpeechSynthesisUtterance(db.questions[cur].eng);
-        u.lang = 'en-US'; window.speechSynthesis.speak(u);
+        u.lang = 'en-US'; 
+        u.rate = 0.8; 
+        window.speechSynthesis.speak(u);
     }
 
+    // KTV 動畫繪製
     function draw() {
         if (!isRec) return;
         aniId = requestAnimationFrame(draw);
@@ -68,65 +101,89 @@
         const cvs = document.getElementById('wave'), ctx = cvs.getContext('2d');
         cvs.width = cvs.offsetWidth; cvs.height = cvs.offsetHeight;
         ctx.fillStyle = '#000'; ctx.fillRect(0, 0, cvs.width, cvs.height);
-        for (let i = 0; i < 20; i++) {
-            const h = (data[i] / 255) * cvs.height;
-            ctx.fillStyle = `hsl(${180 + i * 5}, 100%, 50%)`;
-            ctx.fillRect(i * (cvs.width/20), cvs.height - h, (cvs.width/20)-2, h);
+        const bw = cvs.width / 25;
+        for (let i = 0; i < 25; i++) {
+            const h = (data[i] / 255) * cvs.height * 1.5;
+            ctx.fillStyle = `hsl(${180 + i * 4}, 100%, 50%)`; // 青藍色調
+            ctx.fillRect(i * bw, cvs.height - h, bw - 2, h);
         }
     }
 
+    // 啟動錄音
     async function runRec() {
         if (!isRec) {
             try {
-                // 關鍵：確保 AudioContext 在點擊時被啟動（iOS 要求）
+                const s = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                // 啟動音訊分析器 (動畫用)
                 if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 if (audioCtx.state === 'suspended') await audioCtx.resume();
+                ana = audioCtx.createAnalyser(); 
+                ana.fftSize = 64;
+                audioCtx.createMediaStreamSource(s).connect(ana);
 
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: { 
-                    channelCount: 1,
-                    sampleRate: 16000, // 強制低取樣率提高辨識率
-                    echoCancellation: true 
-                }});
-
-                ana = audioCtx.createAnalyser();
-                audioCtx.createMediaStreamSource(stream).connect(ana);
-
-                const mime = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/mp4";
-                mr = new MediaRecorder(stream, { mimeType: mime });
+                // 偵測裝置支援的格式 (iPhone 優化)
+                const mime = ["audio/webm", "audio/mp4", "audio/aac"].find(t => MediaRecorder.isTypeSupported(t)) || "audio/mp4";
+                
+                mr = new MediaRecorder(s, { mimeType: mime });
                 chunks = [];
-
                 mr.ondataavailable = e => { if(e.data.size > 0) chunks.push(e.data); };
+                
                 mr.onstop = async () => {
-                    document.getElementById('rec-btn').innerText = "🤖 辨識中...";
                     const blob = new Blob(chunks, { type: mime });
+                    s.getTracks().forEach(t => t.stop()); // 關閉麥克風硬體
+                    
+                    if (blob.size < 1500) {
+                        alert("錄音時間太短，請大聲一點再試一次。");
+                        resetBtn();
+                        return;
+                    }
+
+                    // 轉為 Base64 傳送給 GAS
                     const reader = new FileReader();
                     reader.readAsDataURL(blob);
                     reader.onloadend = async () => {
                         const base64 = reader.result.split(',')[1];
-                        const r = await fetch(API, { method: 'POST', body: JSON.stringify({ action: 'recognize', audio: base64, mimeType: mime }) });
-                        const res = await r.json();
-                        handleResult(res.transcript);
+                        document.getElementById('rec-btn').innerText = "🤖 AI 辨識中...";
+                        try {
+                            const r = await fetch(API, { 
+                                method: 'POST', 
+                                body: JSON.stringify({ action: 'recognize', audio: base64, mimeType: mime }) 
+                            });
+                            const res = await r.json();
+                            handleResult(res.transcript);
+                        } catch (e) { 
+                            alert("連線逾時，請檢查網路。"); 
+                            resetBtn();
+                        }
                     };
-                    stream.getTracks().forEach(t => t.stop());
                 };
 
-                mr.start(); isRec = true; draw();
+                mr.start();
+                isRec = true;
+                draw();
                 document.getElementById('rec-btn').innerText = "⏹ 停止錄音";
-                document.getElementById('rec-btn').style.color = "var(--d)";
-            } catch (e) { alert("麥克風啟動失敗：" + e.message); }
+                document.getElementById('rec-btn').style.color = "var(--danger)";
+            } catch (e) { alert("請允許使用麥克風權限才能練習喔！"); }
         } else {
-            isRec = false; cancelAnimationFrame(aniId); mr.stop();
+            isRec = false;
+            cancelAnimationFrame(aniId);
+            mr.stop();
             document.getElementById('rec-btn').disabled = true;
         }
     }
 
-    function handleResult(txt) {
+    function resetBtn() {
         document.getElementById('rec-btn').disabled = false;
-        document.getElementById('rec-btn').innerText = "🎙️ 開始錄音";
-        document.getElementById('rec-btn').style.color = "var(--s)";
-        
+        document.getElementById('rec-btn').innerText = "🎙️ 按我錄音";
+        document.getElementById('rec-btn').style.color = "var(--success)";
+    }
+
+    // 處理辨識結果與評分
+    function handleResult(txt) {
+        resetBtn();
         if (!txt || txt === "EMPTY" || txt.startsWith("ERROR")) { 
-            alert("系統沒聽到聲音，請靠近一點或說大聲一點喔！"); 
+            alert("沒聽到聲音喔，請靠近麥克風並大聲朗讀！"); 
             return; 
         }
 
@@ -134,21 +191,39 @@
         const spoken = txt.toLowerCase().replace(/[.,!?]/g,"").split(" ");
         let match = 0;
         target.forEach(w => { if(spoken.includes(w)) match++; });
-        let score = Math.floor((match / target.length) * 100);
         
-        document.getElementById('score').innerText = score + " 分";
+        let score = Math.floor((match / target.length) * 100);
+        document.getElementById('score-display').innerHTML = `${score}<span id="score-unit">分</span>`;
         document.getElementById('next-btn').disabled = false;
         window.lastTxt = txt;
 
+        // 曾老師指定的評語機制
         if (score >= 90) alert("太厲害了，好棒棒！");
         else if (score >= 60) alert("還不錯喔，再加油。");
         else alert("請認真學習。");
     }
 
+    // 下一題與成績存檔
     function nextQ() {
-        fetch(API, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ student: stu, eng: db.questions[cur].eng, score: document.getElementById('score').innerText, recognizedText: window.lastTxt }) });
-        if (cur < db.questions.length - 1) { cur++; showQ(); }
-        else { alert("全部完成！"); location.reload(); }
+        // 發送成績到後台 (非同步)
+        fetch(API, { 
+            method: 'POST', 
+            mode: 'no-cors', 
+            body: JSON.stringify({ 
+                student: stu, 
+                eng: db.questions[cur].eng, 
+                score: document.getElementById('score-display').innerText.replace("分",""), 
+                recognizedText: window.lastTxt 
+            }) 
+        });
+
+        if (cur < db.questions.length - 1) { 
+            cur++; 
+            showQ(); 
+        } else {
+            alert("恭喜你！全部題目都練習完畢了！");
+            location.reload(); 
+        }
     }
 </script>
 </body>
