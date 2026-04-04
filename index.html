@@ -3,102 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>博瀚 AI 英語 V6.0 Gemini版</title>
+    <title>博瀚 AI 英語 V6.0</title>
     <style>
-        :root { --primary: #00d4ff; --gold: #ffc107; --bg: #050505; --card: #111; --success: #00ffbb; --danger: #ff4444; }
-        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: #fff; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; -webkit-tap-highlight-color: transparent; }
-        .card { background: rgba(17, 17, 17, 0.95); padding: 20px; border-radius: 30px; width: 92%; max-width: 440px; height: 92vh; display: flex; flex-direction: column; text-align: center; border: 1px solid #00d4ff44; position: relative; box-shadow: 0 0 30px rgba(0, 212, 255, 0.2); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-sizing: border-box; }
-        
-        #login-ui { display: flex; flex-direction: column; align-items: center; width: 100%; margin-top: 40px; }
-        .logo-area { position: relative; width: 110px; height: 110px; margin-bottom: 20px; }
-        .logo-img { width: 100%; height: 100%; border-radius: 50%; border: 2px solid var(--primary); background: #000; }
-        
-        #toast { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.5); width: 85%; z-index: 1000; opacity: 0; pointer-events: none; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); background: rgba(0,0,0,0.98); padding: 40px 20px; border-radius: 40px; border: 3px solid var(--primary); display: flex; flex-direction: column; align-items: center; box-sizing: border-box; }
-        #toast.toast-show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-        
-        .content-scroll { flex: 1; overflow-y: auto; margin-bottom: 10px; padding-top: 40px; }
-        #ktv-box { font-size: 28px; font-weight: 800; line-height: 1.4; margin: 10px 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 12px; }
-        .word { color: var(--gold); } 
-        .word.active { color: var(--primary); text-shadow: 0 0 15px var(--primary); } 
-        #chi-box { color: #fff; font-size: 18px; margin: 15px 0; opacity: 0.7; }
-        
-        #total-score { font-size: 90px; font-weight: 900; color: var(--success); margin: 0; }
-        
-        .btn { width: 100%; padding: 16px; border-radius: 18px; border: none; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-primary { background: linear-gradient(135deg, #00d4ff, #0080ff); color: #000; box-shadow: 0 5px 15px rgba(0, 212, 255, 0.4); }
-        .btn-primary:disabled { background: #444; color: #888; box-shadow: none; }
+        :root { --primary: #00d4ff; --gold: #ffc107; --bg: #050505; --card: #111; --success: #00ffbb; --warning: #ffc107; --danger: #ff4444; }
+        body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: #fff; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .card { background: rgba(17, 17, 17, 0.95); padding: 20px; border-radius: 30px; width: 92%; max-width: 440px; height: 92vh; display: flex; flex-direction: column; text-align: center; border: 1px solid #00d4ff44; position: relative; box-sizing: border-box; }
+        #ktv-box { font-size: 28px; font-weight: 800; margin: 20px 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+        .word { color: var(--gold); } .word.active { color: var(--primary); text-shadow: 0 0 10px var(--primary); }
+        #total-score { font-size: 80px; font-weight: 900; margin: 10px 0; }
+        .btn { width: 100%; padding: 16px; border-radius: 18px; border: none; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3; margin-top: 10px; }
+        .btn-primary { background: linear-gradient(135deg, #00d4ff, #0080ff); color: #000; }
+        .btn-primary:disabled { background: #444; color: #888; }
         .btn-dark { background: #222; color: #fff; border: 1px solid #444; }
-        .login-input { width: 100%; padding: 18px; margin-bottom: 15px; border-radius: 15px; border: 1px solid #333; background: #000; color: #fff; text-align: center; font-size: 20px; box-sizing: border-box; }
+        #toast { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; z-index: 1000; opacity: 0; pointer-events: none; transition: 0.4s; background: rgba(0,0,0,0.9); padding: 30px; border-radius: 30px; border: 3px solid var(--primary); }
+        #toast.show { opacity: 1; }
         .hidden { display: none !important; }
     </style>
 </head>
-<body onclick="wakeAudio()">
-
-<div id="toast"><div id="toast-icon" style="font-size:80px"></div><div id="toast-text" style="font-size:24px; font-weight:900"></div></div>
-
-<div class="card">
-    <div id="login-ui">
-        <div class="logo-area"><img src="bohan_logo.png" class="logo-img" onerror="this.style.display='none'"></div>
-        <h2 style="color:var(--primary); margin-bottom:20px;">博瀚 AI 英語 (V6.0)</h2>
-        <input type="text" id="user" class="login-input" placeholder="學生姓名">
-        <input type="password" id="pass" class="login-input" placeholder="密碼">
-        <button id="login-btn" class="btn btn-primary" onclick="handleLogin()">進入學習空間</button>
-    </div>
-
-    <div id="main-ui" class="hidden" style="display:flex; flex-direction:column; height:100%;">
-        <div class="content-scroll">
-            <div id="ktv-box">載入中...</div>
-            <div id="chi-box"></div>
+<body onclick="wakeAudioContext()">
+    <div id="toast"><div id="t-icon" style="font-size:60px;"></div><div id="t-text" style="font-size:20px; font-weight:bold;"></div></div>
+    
+    <div class="card">
+        <div id="login-ui">
+            <h2 style="color:var(--primary);">博瀚 AI 英語系統</h2>
+            <input type="text" id="user" placeholder="學生姓名" style="width:100%; padding:15px; margin-bottom:10px; border-radius:10px; border:none; text-align:center;">
+            <input type="password" id="pass" placeholder="密碼" style="width:100%; padding:15px; margin-bottom:20px; border-radius:10px; border:none; text-align:center;">
+            <button class="btn btn-primary" onclick="handleLogin()">進入學習</button>
         </div>
-        <div class="controls">
+
+        <div id="main-ui" class="hidden">
+            <div id="ktv-box">載入中...</div>
+            <div id="chi-box" style="opacity:0.6; margin-bottom:20px;"></div>
             <div id="total-score">0</div>
-            <p style="color:#aaa; font-size:14px; margin-top:-10px;">Gemini AI 評分系統</p>
-            <div style="display:flex; gap:10px; margin-bottom:10px;">
-                <button id="play-btn" class="btn btn-dark" style="flex:1" onclick="handlePlay()">🔊 範例</button>
+            <canvas id="wave" style="width:100%; height:60px; background:#000; border-radius:10px; margin-bottom:15px;"></canvas>
+            <div style="display:flex; gap:10px;">
+                <button id="play-btn" class="btn btn-dark" style="flex:1" onclick="handlePlay()">🔊 聽範例</button>
                 <button id="rec-btn" class="btn btn-dark" style="flex:2; color:var(--success);" onclick="toggleRec()">🎙️ 按我錄音</button>
             </div>
             <button id="next-btn" class="btn btn-primary" onclick="fastNext()" disabled>下一題 ➔</button>
         </div>
     </div>
-</div>
 
 <script>
-    // ⚠️ 請務必換成您「最新部署」的 GAS 網址
-    const API = "https://script.google.com/macros/s/AKfycbwYVzgbxwZzDqTbA9nOMpOMqkqbKv60XdPYELBvqyRZCESwXZKCbyMI4OE0u5cC9XH_lw/exec"; 
-    
+    const API = "https://script.google.com/macros/s/AKfycbwLm3aY7sfU4sb3CJTThDiOwtQB2cPmjP7_MLNWuvLcJu-su0znbMjattQ-ULsbjn2PRA/exec"; 
     let db = { users:[], questions:[] }, stu = "", cur = 0, isRec = false, audioBlob = null;
-    let audioCtx, stream, isPlaying = false, mediaRecorder = null;
+    let audioCtx, ana, stream, isPlaying = false;
 
-    // 啟動音訊環境 (針對 iOS/Android 瀏覽器限制)
-    async function wakeAudio() {
+    async function wakeAudioContext() {
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         if (audioCtx.state === 'suspended') await audioCtx.resume();
     }
 
-    // 初始化：抓取名單與題目
     async function init() {
-        try { 
-            const r = await fetch(`${API}?t=${Date.now()}`); 
-            const d = await r.json(); 
-            // 自動過濾空白題
-            db.questions = d.questions.filter(q => q.eng && q.eng.trim() !== "");
-            db.users = d.users;
-        } catch(e) { console.error("載入失敗", e); }
+        try { const r = await fetch(`${API}?t=${Date.now()}`); db = await r.json(); } catch(e) {}
     }
     window.onload = init;
 
-    // 登入邏輯
     function handleLogin() {
         const u = document.getElementById('user').value.trim(), p = document.getElementById('pass').value.trim();
         const found = db.users.find(x => String(x[0]) === u && String(x[1]) === p);
         if(!found) { alert("驗證失敗"); return; }
-        stu = u;
-        document.getElementById('login-ui').classList.add('hidden');
-        document.getElementById('main-ui').classList.remove('hidden');
-        renderQ();
+        stu = u; document.getElementById('login-ui').classList.add('hidden'); document.getElementById('main-ui').classList.remove('hidden'); renderQ();
     }
 
-    // 題目顯示
     function renderQ() {
         if (cur >= db.questions.length) { showFinal(); return; }
         const q = db.questions[cur];
@@ -106,104 +73,72 @@
         document.getElementById('chi-box').innerText = q.chi;
         document.getElementById('total-score').innerText = "0";
         document.getElementById('next-btn').disabled = true;
-        document.getElementById('rec-btn').innerText = "🎙️ 按我錄音";
-        document.getElementById('rec-btn').disabled = false;
-        audioBlob = null;
     }
 
-    // 聽範例 (TTS)
-    function handlePlay() {
-        if (isPlaying) { window.speechSynthesis.cancel(); isPlaying = false; return; }
-        isPlaying = true;
-        const ut = new SpeechSynthesisUtterance(db.questions[cur].eng);
-        ut.lang = 'en-US'; ut.rate = 0.8;
-        ut.onend = () => { isPlaying = false; };
-        window.speechSynthesis.speak(ut);
+    function drawWave() {
+        if (!isRec || !ana) return; const cvs = document.getElementById('wave'), c = cvs.getContext('2d');
+        cvs.width = cvs.offsetWidth; cvs.height = cvs.offsetHeight;
+        const data = new Uint8Array(ana.frequencyBinCount);
+        const render = () => { if (!isRec) return; requestAnimationFrame(render); ana.getByteFrequencyData(data);
+            c.fillStyle = '#000'; c.fillRect(0, 0, cvs.width, cvs.height);
+            for (let i = 0; i < 20; i++) { const h = (data[i] / 255) * cvs.height * 2; c.fillStyle = `hsl(${i * 18 + 180}, 100%, 60%)`; c.fillRect(i * (cvs.width/20), cvs.height - h, (cvs.width/20) - 2, h); }
+        }; render();
     }
 
-    // 核心：純錄音邏輯 (不跑辨識，只存檔)
     async function toggleRec() {
+        await wakeAudioContext(); 
         if (!isRec) {
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-                let chunks = [];
-                mediaRecorder.ondataavailable = e => chunks.push(e.data);
-                mediaRecorder.onstop = () => {
-                    audioBlob = new Blob(chunks, { type: 'audio/webm' });
-                    // 釋放麥克風資源，避免 Android 衝突
-                    stream.getTracks().forEach(track => track.stop());
-                    processAI();
-                };
-                mediaRecorder.start();
-                isRec = true;
-                document.getElementById('rec-btn').innerText = "⏹ 停止錄音";
-                document.getElementById('rec-btn').style.color = "var(--danger)";
-            } catch (e) { alert("無法開啟麥克風，請檢查權限"); }
+            stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            ana = audioCtx.createAnalyser(); ana.fftSize = 64;
+            audioCtx.createMediaStreamSource(stream).connect(ana);
+            drawWave();
+            const mr = new MediaRecorder(stream, { mimeType: 'audio/webm' }); 
+            let chunks = [];
+            mr.ondataavailable = e => chunks.push(e.data);
+            mr.onstop = async () => {
+                audioBlob = new Blob(chunks, { type: 'audio/webm' });
+                document.getElementById('rec-btn').innerText = "⏳ AI 評分中...";
+                await sendToGemini();
+            };
+            mr.start(); window.currentMR = mr; isRec = true;
+            document.getElementById('rec-btn').innerText = "⏹ 停止錄音"; document.getElementById('rec-btn').style.color = "var(--danger)";
         } else {
-            mediaRecorder.stop();
-            isRec = false;
-            document.getElementById('rec-btn').innerText = "⏳ AI 評分中...";
-            document.getElementById('rec-btn').disabled = true;
-            document.getElementById('rec-btn').style.color = "var(--success)";
+            isRec = false; if (window.currentMR) window.currentMR.stop();
+            stream.getTracks().forEach(t => t.stop());
+            document.getElementById('rec-btn').innerText = "🎙️ 按我錄音"; document.getElementById('rec-btn').style.color = "var(--success)";
         }
     }
 
-    // 傳送到 GAS 由 Gemini 評分
-    async function processAI() {
-        const reader = new FileReader();
-        reader.readAsDataURL(audioBlob);
-        reader.onloadend = async () => {
-            const base64Audio = reader.result.split(',')[1];
-            try {
-                const response = await fetch(API, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        student: stu,
-                        eng: db.questions[cur].eng,
-                        audio: base64Audio
-                    })
-                });
-                const res = await response.json();
-                const score = res.score;
-                
-                document.getElementById('total-score').innerText = score;
-                document.getElementById('total-score').style.color = score >= 20 ? "var(--success)" : "var(--gold)";
-                document.getElementById('next-btn').disabled = false;
-                document.getElementById('rec-btn').innerText = "🎙️ 重錄一遍";
-                document.getElementById('rec-btn').disabled = false;
-                
-                showToast(score >= 20 ? "👑" : "👍", `AI 評分：${score} 分`, score >= 20 ? "var(--success)" : "var(--gold)");
-            } catch (e) {
-                alert("傳送失敗，請檢查網路");
-                document.getElementById('rec-btn').disabled = false;
-            }
-        };
+    async function sendToGemini() {
+        if (!audioBlob || audioBlob.size < 500) { showFeedback(0); return; }
+        let base64Audio = ""; const reader = new FileReader(); reader.readAsDataURL(audioBlob);
+        await new Promise(res => { reader.onloadend = () => { base64Audio = reader.result.split(',')[1]; res(); }; });
+
+        const r = await fetch(API, { method: 'POST', body: JSON.stringify({ student: stu, eng: db.questions[cur].eng, audio: base64Audio }) });
+        const res = await r.json();
+        const score = res.score;
+        document.getElementById('total-score').innerText = score;
+        showFeedback(score);
+        document.getElementById('next-btn').disabled = false;
     }
 
-    function showToast(icon, text, color) {
+    function showFeedback(score) {
+        let icon, text, color;
+        if (score >= 90) { icon = "👑"; text = "太厲害了，好棒棒！"; color = "var(--success)"; }
+        else if (score >= 60) { icon = "👍"; text = "還不錯喔，再加油。"; color = "var(--warning)"; }
+        else if (score > 0) { icon = "😤"; text = "請認真學習。"; color = "var(--danger)"; }
+        else { icon = "❓"; text = "沒聽到聲音喔。"; color = "#aaa"; }
+
         const t = document.getElementById('toast');
-        document.getElementById('toast-icon').innerText = icon;
-        document.getElementById('toast-text').innerText = text;
-        t.style.borderColor = color;
-        t.classList.add('toast-show');
-        setTimeout(() => t.classList.remove('toast-show'), 2000);
+        document.getElementById('t-icon').innerText = icon; document.getElementById('t-text').innerText = text;
+        t.style.borderColor = color; t.classList.add('show');
+        
+        const ut = new SpeechSynthesisUtterance(text); ut.lang = 'zh-TW'; window.speechSynthesis.speak(ut);
+        setTimeout(() => t.classList.remove('show'), 2500);
     }
 
-    function fastNext() {
-        cur++;
-        renderQ();
-    }
-
-    function showFinal() {
-        document.getElementById('main-ui').innerHTML = `
-            <div style="margin-top:100px;">
-                <div style="font-size: 80px;">🏆</div>
-                <h1 style="color:var(--primary);">Excellent!</h1>
-                <p>所有題目已完成並自動存檔</p>
-                <button class="btn btn-primary" onclick="location.reload()" style="width:200px; margin-top:20px;">回首頁</button>
-            </div>`;
-    }
+    function fastNext() { cur++; renderQ(); }
+    function showFinal() { document.getElementById('main-ui').innerHTML = "<h1>🏆 功課完成！</h1><button class='btn btn-primary' onclick='location.reload()'>回主畫面</button>"; }
 </script>
 </body>
 </html>
